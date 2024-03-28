@@ -10,6 +10,8 @@ import { Id } from "@/../convex/_generated/dataModel";
 
 import Image from "next/image";
 
+import { formatDistanceToNow } from "date-fns";
+
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -74,36 +76,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface Job {
-  _id: Id<"jobs">;
-  _creationTime: number;
-  posting_link: string;
-  posting_id: string;
-  apply_link: string;
-  company: string;
-  salary_range: string;
-  salary_midpoint?: number | null; // Make salary_midpoint optional
-  title: string;
-  location: string;
-  department: string;
-  descriptionId?: Id<"jobDescriptions">;
-  years_of_experience: string;
-  status?: "open" | "closed";
-  isNew?: boolean;
-  user_rating?: "like" | "dislike" | "neutral" | "unknown";
-  predicted_user_rating?: "like" | "dislike" | "neutral" | "unknown";
-  embeddedJobMatches?: {
-    matchingJobId: Id<"jobs">;
-    embeddingId: Id<"jobEmbeddings">;
-    score: number;
-  }[];
-}
+import { Job } from "@/lib/interfaces";
+
+import { JobDetailAlert } from "./jobDetail";
 
 export default function Page() {
   const jobs = useQuery(api.jobs.getJobs);
   const updateUserRating = useMutation(api.jobs.updateUserRating);
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
   const [salaryMidpointFilter, setSalaryMidpointFilter] = useState<
@@ -220,9 +202,11 @@ export default function Page() {
   };
 
   const handleToggle = async (
+    event: React.MouseEvent<HTMLButtonElement>, // Corrected type here
     jobId: Id<"jobs">,
     new_user_rating: "like" | "dislike" | "neutral" | "unknown"
   ) => {
+    event.stopPropagation(); // This stops the event from bubbling up to the row's onClick handler
     console.log(new_user_rating);
     if (!new_user_rating) {
       await updateUserRating({ jobId, user_rating: "unknown" });
@@ -320,73 +304,11 @@ export default function Page() {
   return (
     <div className="mt-4 mx-5">
       {selectedJob && (
-        <AlertDialog
-          open={isAlertDialogOpen}
-          onOpenChange={setIsAlertDialogOpen}
-        >
-          <AlertDialogContent className="p-0">
-            <Card className="w-full max-w-3xl">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{selectedJob.title}</CardTitle>
-                  {selectedJob.isNew && <Badge>New</Badge>}
-                </div>
-                <CardDescription>{selectedJob.company}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
-                    {selectedJob.location}
-                  </div>
-                  <div className="text-sm">{selectedJob.department}</div>
-                </div>
-                <div className="text-sm text-gray-500">
-                  {selectedJob.salary_range}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {selectedJob.years_of_experience} years
-                </div>
-                <p className="text-sm">
-                  About the role:{" "}
-                  {
-                    // selectedJob.description /* You'll need to fetch and display the job description here */
-                  }
-                </p>
-                <div className="flex items-center justify-between">
-                  <Link
-                    href={selectedJob.posting_link}
-                    className="underline text-sm"
-                  >
-                    Posting Link
-                  </Link>
-                  <Link
-                    href={selectedJob.apply_link}
-                    className="underline text-sm"
-                  >
-                    Apply Link
-                  </Link>
-                </div>
-                <div className="text-sm text-gray-500">
-                  Job Status: {selectedJob.status}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm">
-                    User Rating: {selectedJob.user_rating}
-                  </div>
-                  <div className="text-sm">
-                    Predicted User Rating: {selectedJob.predicted_user_rating}
-                  </div>
-                </div>
-                {/* You can add the Embedded Job Matches section here if applicable */}
-              </CardContent>
-            </Card>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIsAlertDialogOpen(false)}>
-                Close
-              </AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <JobDetailAlert
+          isOpen={isAlertDialogOpen}
+          onClose={() => setIsAlertDialogOpen(false)}
+          job={selectedJob}
+        />
       )}
       <div className="flex flex-row space-x-4 items-end mb-4">
         <div className="relative">
@@ -607,6 +529,26 @@ export default function Page() {
             <TableRow>
               <TableHead
                 className=""
+                onClick={() => handleSortClick("_creationTime")}
+              >
+                <Button
+                  variant="ghost"
+                  className="w-full flex items-center justify-between"
+                >
+                  <span className="mr-2">Posting Date</span>
+                  {sortColumn === "_creationTime" ? (
+                    sortOrder === "asc" ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )
+                  ) : (
+                    ""
+                  )}
+                </Button>
+              </TableHead>
+              <TableHead
+                className=""
                 onClick={() => handleSortClick("user_rating")}
               >
                 <Button
@@ -805,24 +747,40 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody className="">
+            {/* @ts-ignore */}
             {sortedJobs?.map((job: Job) => (
               <TableRow
                 key={job._id}
                 onClick={() => handleRowClick(job)}
                 className="cursor-pointer"
               >
+                <TableCell className="">
+                  <div className="px-4">
+                    {formatDistanceToNow(new Date(job._creationTime), {
+                      addSuffix: true,
+                    })}
+                  </div>
+                </TableCell>
                 <TableCell className="px-1">
-                  <ToggleGroup
-                    type="single"
-                    value={job.user_rating}
-                    onValueChange={(value) => {
-                      handleToggle(job._id, value as "like" | "dislike");
-                    }}
-                  >
-                    <ToggleGroupItem value="like" size="sm">
+                  <ToggleGroup type="single" value={job.user_rating}>
+                    <ToggleGroupItem
+                      value="like"
+                      size="sm"
+                      onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                        event.stopPropagation();
+                        handleToggle(event, job._id, "like");
+                      }}
+                    >
                       <ThumbsUp className="w-4 h-4" />
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="dislike" size="sm">
+                    <ToggleGroupItem
+                      value="dislike"
+                      size="sm"
+                      onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                        event.stopPropagation();
+                        handleToggle(event, job._id, "dislike");
+                      }}
+                    >
                       <ThumbsDown className="w-4 h-4" />
                     </ToggleGroupItem>
                   </ToggleGroup>

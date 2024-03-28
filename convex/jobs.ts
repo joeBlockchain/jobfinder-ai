@@ -163,3 +163,13 @@ export const fetchJobsByEmbeddingId = query({
     return results;
   },
 });
+
+export const getJobDescription = query({
+  args: {
+    descriptionId: v.id("jobDescriptions"),
+  },
+  handler: async (ctx, args) => {
+    const description = await ctx.db.get(args.descriptionId);
+    return description;
+  },
+});

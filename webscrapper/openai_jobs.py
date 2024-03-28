@@ -14,7 +14,8 @@ load_dotenv()
 NEXT_PUBLIC_CONVEX_URL = os.getenv("NEXT_PUBLIC_CONVEX_URL")
 convex_client = ConvexClient(NEXT_PUBLIC_CONVEX_URL)
 
-
+# Initialize counters
+job_count = 0 
 
 # Fetch the content of the careers page
 url = "https://openai.com/careers/search"
@@ -57,7 +58,7 @@ def clean_text(html_content):
     return cleaned_text
 
 
-for job in job_postings[:1]:
+for job in job_postings:
     try:
         # Extract job details
         title = job.find("h3").text.strip() if job.find("h3") else "Title not found"
@@ -93,7 +94,7 @@ for job in job_postings[:1]:
         if embedding_results is not None:
             # Extract the '_id' and '_score' values from the similar job results
             embeddedJobMatches = []
-            print("embedding results in python:", embedding_results)
+            # print("embedding results in python:", embedding_results)
             
             # Initialize variables for tracking the highest user rating
             highest_user_rating = "unknown"
@@ -124,8 +125,8 @@ for job in job_postings[:1]:
             # Extract the '_id' values from the results to pass to the query
             embedding_ids = [result['_id'] for result in embedding_results if result['_score'] > 0.80]  # Filter embedding_ids based on score
             job_data = convex_client.query('jobs:fetchJobsByEmbeddingId', {'ids': embedding_ids})
-            print("job_data from convex in backend main:", job_data)
-            print("matching jobs:", embeddedJobMatches)
+            # print("job_data from convex in backend main:", job_data)
+            # print("matching jobs:", embeddedJobMatches)
         else:
             print(f"No similar jobs found for embedding: {title}")
             predicted_user_rating = "neutral"
@@ -189,12 +190,14 @@ for job in job_postings[:1]:
 
         job_id = convex_client.mutation("jobs:createJob", job_data)
 
-        print("job_data", job_data)
+        
+        job_count += 1
+        print(f"{job_count}. Added job: {title}")
 
     except Exception as e:
         print(f"An error occurred while processing a job posting{e}")
 
-
+print(f"Total jobs added: {job_count}")
 
 
 
