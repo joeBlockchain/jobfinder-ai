@@ -24,7 +24,7 @@ import { Job } from "@/lib/interfaces";
 interface JobDetailAlertProps {
   isOpen: boolean;
   onClose: () => void;
-  job: Job | null;
+  job: Job;
 }
 
 export const JobDetailAlert: React.FC<JobDetailAlertProps> = ({
@@ -32,11 +32,11 @@ export const JobDetailAlert: React.FC<JobDetailAlertProps> = ({
   onClose,
   job,
 }) => {
-  if (!job) return null;
-
   const jobDes = useQuery(api.jobs.getJobDescription, {
-    descriptionId: job.descriptionId,
+    descriptionId: job?.descriptionId,
   });
+
+  if (!job) return null;
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
