@@ -1,10 +1,10 @@
 "use client";
 
 const experienceRanges = [
-  { label: '0-5 years', min: 0, max: 5 },
-  { label: '6-10 years', min: 6, max: 10 },
-  { label: '11-15 years', min: 11, max: 15 },
-  { label: '16-20 years', min: 16, max: 20 },
+  { label: "0-5 years", min: 0, max: 5 },
+  { label: "6-10 years", min: 6, max: 10 },
+  { label: "11-15 years", min: 11, max: 15 },
+  { label: "16-20 years", min: 16, max: 20 },
 ];
 
 import React, { useEffect, useState } from "react";
@@ -277,16 +277,22 @@ export default function Page() {
             job.salary_midpoint !== salaryMidpointFilter
           )
             return false;
-            if (yearsOfExperienceFilter) {
-              const selectedRange = experienceRanges.find(range => range.label === yearsOfExperienceFilter);
-              if (selectedRange) {
-                const years = parseInt(job.years_of_experience, 10);
-                if (isNaN(years) || years < selectedRange.min || years > selectedRange.max) {
-                  return false;
-                }
+          if (yearsOfExperienceFilter) {
+            const selectedRange = experienceRanges.find(
+              (range) => range.label === yearsOfExperienceFilter
+            );
+            if (selectedRange) {
+              const years = parseInt(job.years_of_experience, 10);
+              if (
+                isNaN(years) ||
+                years < selectedRange.min ||
+                years > selectedRange.max
+              ) {
+                return false;
               }
             }
-            
+          }
+
           if (userRatingFilter && job.user_rating !== userRatingFilter)
             return false;
           if (
@@ -466,30 +472,32 @@ export default function Page() {
             </DropdownMenuSub>
 
             <DropdownMenuSub>
-  <DropdownMenuSubTrigger>
-    <Badge variant="outline" className="mr-3">
-      {experienceRanges.length}
-    </Badge>
-    Years of Experience
-  </DropdownMenuSubTrigger>
-  <DropdownMenuSubContent>
-    <DropdownMenuCheckboxItem
-      checked={yearsOfExperienceFilter === null}
-      onCheckedChange={() => setYearsOfExperienceFilter(null)}
-    >
-      All
-    </DropdownMenuCheckboxItem>
-    {experienceRanges.map((range) => (
-      <DropdownMenuCheckboxItem
-        key={range.label}
-        checked={yearsOfExperienceFilter === range.label}
-        onCheckedChange={() => setYearsOfExperienceFilter(range.label)}
-      >
-        {range.label}
-      </DropdownMenuCheckboxItem>
-    ))}
-  </DropdownMenuSubContent>
-</DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Badge variant="outline" className="mr-3">
+                  {experienceRanges.length}
+                </Badge>
+                Years of Experience
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuCheckboxItem
+                  checked={yearsOfExperienceFilter === null}
+                  onCheckedChange={() => setYearsOfExperienceFilter(null)}
+                >
+                  All
+                </DropdownMenuCheckboxItem>
+                {experienceRanges.map((range) => (
+                  <DropdownMenuCheckboxItem
+                    key={range.label}
+                    checked={yearsOfExperienceFilter === range.label}
+                    onCheckedChange={() =>
+                      setYearsOfExperienceFilter(range.label)
+                    }
+                  >
+                    {range.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
